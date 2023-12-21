@@ -1,0 +1,173 @@
+{
+	"info": {
+		"_postman_id": "07b97fd8-19c7-4ca1-803d-7498800bebfc",
+		"name": "Test",
+		"description": "Steps to run test\n\n1. Import collection into your postman application\n2. confirm collection variables are all set; url: [http://dummy.restapiexample.com/api/v1EndFragment](http://dummy.restapiexample.com/api/v1EndFragment) and iteration: 1\n    \n3. click on run on the top right coner of the application",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "8914259"
+	},
+	"item": [
+		{
+			"name": "All employees",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let res = pm.response.json(); // get pm server response\r",
+							"let employees = res?.data || [];\r",
+							"let michael = employees.find(item => item.employee_name === \"Michael Silva\");\r",
+							"\r",
+							"// save employees data for subsequent tests\r",
+							"if (employees.length > 0) pm.collectionVariables.set(\"employees\", JSON.stringify(employees));\r",
+							"\r",
+							"// First test case\r",
+							"pm.test(\"Confirm server response is true and all employees data are returned\", () => pm.expect(res?.status == \"success\" && res?.data.length > 0).to.eql(true));\r",
+							"\r",
+							"// Second test case\r",
+							"pm.test(\"Confirm employee “Michael Silva” has a salary of 198500\", () => {\r",
+							"    pm.expect(typeof michael != \"undefined\" && michael.employee_salary == 198500).to.eql(true)\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/employees",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"employees"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get employee",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// importing temporal data environment variable.\r",
+							"let emp_arr = JSON.parse(pm.variables.get(\"employees\")); // import test iteration value\r",
+							"let test_case = pm.variables.get(\"test_case\");\r",
+							"let test_iteration = Number(pm.variables.get(\"iteration\")) || 1;\r",
+							"let phone = pm.variables.get(\"phone\");\r",
+							"\r",
+							"// 1st test cyle = get employee using invalid id\r",
+							"if(test_iteration == 1)\r",
+							"{\r",
+							"    pm.collectionVariables.set(\"id\", \"dummyText\"); // invalidate employee id collection variable\r",
+							"    pm.collectionVariables.set(\"test_case\", \"Confirm tester cannot fetch employee data using invalid id\");\r",
+							"}\r",
+							"\r",
+							"// 2nd test cyle = get employee using valid id\r",
+							"if(test_iteration == 2)\r",
+							"{\r",
+							"    pm.collectionVariables.set(\"id\", 5); // validate employee id collection variable\r",
+							"    pm.collectionVariables.set(\"test_case\", \"Confirm tester can fetch employee data using valid id\");\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let test_case = pm.variables.get(\"test_case\"); // import test iteration value\r",
+							"let test_iteration = Number(pm.variables.get(\"iteration\")) || 1; // import or define iteration value\r",
+							"let cycle = 2;\r",
+							"let res = pm.response.json(); // get server response\r",
+							"let err = res?.message || \"\"; // check for errors\r",
+							"let employee = res?.data || {}; // get data returned\r",
+							"\r",
+							"// test using invalid id\r",
+							"if(test_iteration < cycle){ \r",
+							"    pm.test(test_case, () => pm.expect(typeof employee != \"undefined\" && err.length > 0).to.eql(true));\r",
+							"    postman.setNextRequest(\"Get employee\"); // rerun endpoint\r",
+							"    pm.collectionVariables.set(\"iteration\", Number(test_iteration) + 1); // increase iteration.\r",
+							"}\r",
+							"\r",
+							"// test using valid data\r",
+							"else\r",
+							"{\r",
+							"    pm.test(test_case, () => pm.expect(err.length == 0 && typeof employee != \"undefined\").to.be.eql(true));\r",
+							"    pm.collectionVariables.set(\"iteration\", 1); // reset iteration to 1\r",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/employees/{{id}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"employees",
+						"{{id}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "http://dummy.restapiexample.com/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "employees",
+			"value": "[]",
+			"type": "string"
+		},
+		{
+			"key": "id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "iteration",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "test_case",
+			"value": ""
+		}
+	]
+}
